@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import Rsync from "../rsync.js";
+import Rsync from "../src/index.js";
 
 describe("options", () => {
 	describe("constructor", () => {

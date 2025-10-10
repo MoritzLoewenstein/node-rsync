@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, it } from "vitest";
-import Rsync from "../rsync.js";
-import { assertOutputPattern } from "./helpers/output.js";
+import Rsync from "../src/index.js";
+import { assertOutputPattern } from "./helpers/output";
 
 describe("inputwin32", () => {
-	let originalPlatform;
+	let originalPlatform: NodeJS.Platform;
 
 	beforeAll(() => {
 		originalPlatform = process.platform;

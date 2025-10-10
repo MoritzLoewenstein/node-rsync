@@ -1,455 +1,447 @@
-# Rsync ![build status](https://travis-ci.org/mattijs/node-rsync.svg?branch=master)
+# Rsync
 
-[![NPM](https://nodei.co/npm/rsync.png?downloads=true)](https://nodei.co/npm/rsync/)
-
-`Rsync` is a class for building and executing `rsync` commands with Node.js.
+A TypeScript-first `rsync` wrapper for Node.js with a Promise-based API.
 
 ## Installation
 
-Installation goes through NPM:
+```bash
+npm install @moritzloewenstein/rsync
+```
 
+## Features
+
+- ✅ **TypeScript native** - Full type definitions included
+- ✅ **Promise-based API** - Modern async/await support
+- ✅ **Simple configuration** - Options object-based API
+- ✅ **Type-safe** - Comprehensive TypeScript interfaces
+- ✅ **ESM** - Pure ES modules
+
+## Quick Start
+
+```typescript
+import Rsync from "rsync";
+
+const rsync = new Rsync({
+  source: "/path/to/source",
+  destination: "server:/path/to/destination",
+  flags: "avz",
+  shell: "ssh",
+});
+
+try {
+  const result = await rsync.execute();
+  console.log("Transfer complete:", result.cmd);
+} catch (error) {
+  console.error("Transfer failed:", error);
+}
 ```
-$ npm install rsync
+
+## API
+
+### Constructor
+
+Create a new Rsync instance with an options object:
+
+```typescript
+const rsync = new Rsync(options);
 ```
+
+### Options
+
+```typescript
+interface RsyncOptions {
+  // Source and destination
+  source?: string | string[];
+  destination?: string;
+
+  // Executable configuration
+  executable?: string; // default: 'rsync'
+  executableShell?: string; // default: '/bin/sh'
+
+  // Process configuration
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  debug?: boolean;
+
+  // Flags (single string of letters)
+  flags?: string; // e.g., 'avz'
+
+  // Common options
+  shell?: string; // SSH shell
+  delete?: boolean; // --delete
+  progress?: boolean; // --progress
+  chmod?: string | string[]; // --chmod
+
+  // Transfer options
+  archive?: boolean; // -a
+  compress?: boolean; // -z
+  recursive?: boolean; // -r
+  update?: boolean; // -u
+  quiet?: boolean; // -q
+  dirs?: boolean; // -d
+  links?: boolean; // -l
+  dry?: boolean; // -n (dry run)
+
+  // Preservation options
+  hardLinks?: boolean; // -H
+  perms?: boolean; // -p
+  executability?: boolean; // -E
+  owner?: boolean; // -o
+  group?: boolean; // -g
+  acls?: boolean; // -A
+  xattrs?: boolean; // -X
+  devices?: boolean; // --devices
+  specials?: boolean; // --specials
+  times?: boolean; // -t
+
+  // Include/Exclude patterns
+  exclude?: string | string[];
+  include?: string | string[];
+
+  // Output handlers
+  output?: [(data: Buffer) => void, (data: Buffer) => void];
+
+  // Custom options
+  set?: Record<string, string | null>;
+}
+```
+
+### Methods
+
+#### `execute(stdoutHandler?, stderrHandler?): Promise<RsyncResult>`
+
+Execute the rsync command. Returns a Promise that resolves with the result or rejects with an error.
+
+```typescript
+// Simple execution
+const result = await rsync.execute();
+
+// With output handlers
+const result = await rsync.execute(
+  (data) => console.log("stdout:", data.toString()),
+  (data) => console.error("stderr:", data.toString())
+);
+```
+
+**Returns:**
+
+```typescript
+interface RsyncResult {
+  code: number; // Exit code (0 for success)
+  cmd: string; // The executed command
+}
+```
+
+**Errors:**
+
+```typescript
+interface RsyncError extends Error {
+  code: number; // rsync exit code
+  cmd: string; // The executed command
+}
+```
+
+#### `command(): string`
+
+Get the complete command string that will be executed.
+
+```typescript
+const cmdString = rsync.command();
+console.log(cmdString); // "rsync -avz --rsh=ssh /source server:/dest"
+```
+
+#### `args(): string[]`
+
+Get the arguments array for the command.
+
+```typescript
+const args = rsync.args();
+console.log(args); // ['-avz', '--rsh=ssh', '/source', 'server:/dest']
+```
+
+#### `executable(): string`
+
+Get the rsync executable path.
+
+```typescript
+const exe = rsync.executable(); // 'rsync'
+```
+
+#### `source(): string[]`
+
+Get the list of source paths.
+
+```typescript
+const sources = rsync.source(); // ['/path/to/source']
+```
+
+#### `destination(): string`
+
+Get the destination path.
+
+```typescript
+const dest = rsync.destination(); // 'server:/path/to/dest'
+```
+
+## Examples
+
+### Basic sync
+
+```typescript
+const rsync = new Rsync({
+  source: "/local/path",
+  destination: "remote:/remote/path",
+  flags: "avz",
+});
+
+await rsync.execute();
+```
+
+### With excludes
+
+```typescript
+const rsync = new Rsync({
+  source: "/project",
+  destination: "server:/backup",
+  flags: "avz",
+  exclude: ["node_modules", ".git", "*.log"],
+  delete: true,
+});
+
+await rsync.execute();
+```
+
+### With includes and excludes
+
+```typescript
+const rsync = new Rsync({
+  source: "/data",
+  destination: "/backup",
+  flags: "avz",
+  exclude: ["*"],
+  include: ["*.txt", "*.md"],
+});
+
+await rsync.execute();
+```
+
+### Progress monitoring
+
+```typescript
+const rsync = new Rsync({
+  source: "/large/dataset",
+  destination: "server:/backup",
+  flags: "avz",
+  progress: true,
+});
+
+await rsync.execute(
+  (data) => {
+    // Parse progress from stdout
+    console.log(data.toString());
+  },
+  (data) => {
+    // Handle errors from stderr
+    console.error(data.toString());
+  }
+);
+```
+
+### Multiple sources
+
+```typescript
+const rsync = new Rsync({
+  source: ["/path/one", "/path/two", "/path/three"],
+  destination: "/backup",
+  flags: "avz",
+});
+
+await rsync.execute();
+```
+
+### SSH with custom shell
+
+```typescript
+const rsync = new Rsync({
+  source: "/local",
+  destination: "user@server:/remote",
+  flags: "avz",
+  shell: "ssh -i /path/to/key",
+});
+
+await rsync.execute();
+```
+
+### Custom options
+
+```typescript
+const rsync = new Rsync({
+  source: "/source",
+  destination: "/dest",
+  flags: "avz",
+  set: {
+    "max-size": "100m",
+    "min-size": "1k",
+    timeout: "300",
+  },
+});
+
+await rsync.execute();
+```
+
+### Environment and working directory
+
+```typescript
+const rsync = new Rsync({
+  source: "./relative/path",
+  destination: "/absolute/dest",
+  cwd: "/project/root",
+  env: {
+    ...process.env,
+    RSYNC_PASSWORD: "secret",
+  },
+  flags: "avz",
+});
+
+await rsync.execute();
+```
+
+## TypeScript Usage
+
+This library is written in TypeScript and provides full type definitions:
+
+```typescript
+import Rsync, { RsyncOptions, RsyncResult, RsyncError } from "rsync";
+
+const options: RsyncOptions = {
+  source: "/src",
+  destination: "/dst",
+  flags: "avz",
+};
+
+const rsync = new Rsync(options);
+
+try {
+  const result: RsyncResult = await rsync.execute();
+  console.log(`Success! Exit code: ${result.code}`);
+} catch (error) {
+  const rsyncError = error as RsyncError;
+  console.error(`Failed with code ${rsyncError.code}: ${rsyncError.message}`);
+}
+```
+
+## Common Rsync Flags
+
+- `a` - Archive mode (equals `-rlptgoD`)
+- `v` - Verbose
+- `z` - Compress during transfer
+- `r` - Recursive
+- `l` - Copy symlinks as symlinks
+- `p` - Preserve permissions
+- `t` - Preserve modification times
+- `g` - Preserve group
+- `o` - Preserve owner
+- `H` - Preserve hard links
+- `n` - Dry run (no changes made)
+- `u` - Skip files that are newer on receiver
+- `q` - Quiet mode
+
+Combine multiple flags as a string: `flags: 'avz'`
+
+## Migration from v0.x
+
+The API has changed significantly in v1.0:
+
+### Old (v0.x) - Callback & Chaining
+
+```javascript
+var Rsync = require("rsync");
+
+var rsync = new Rsync()
+  .shell("ssh")
+  .flags("az")
+  .source("/path/to/source")
+  .destination("server:/path/to/destination");
+
+rsync.execute(function (error, code, cmd) {
+  // callback
+});
+```
+
+### New (v1.0+) - Promise & Options
+
+```typescript
+import Rsync from "rsync";
+
+const rsync = new Rsync({
+  shell: "ssh",
+  flags: "az",
+  source: "/path/to/source",
+  destination: "server:/path/to/destination",
+});
+
+await rsync.execute();
+```
+
+### Key Changes
+
+1. **ESM instead of CommonJS** - Use `import` instead of `require`
+2. **TypeScript native** - Full type definitions included
+3. **Promise-based** - `execute()` returns a Promise instead of using callbacks
+4. **Options object** - Pass all configuration to constructor, no method chaining
+5. **No `build()` method** - Just use `new Rsync(options)`
+6. **Simplified patterns** - Use `exclude` and `include` arrays, no `patterns()` method
 
 ## License
 
 This module is licensed under the MIT License. See the `LICENSE` file for more details.
 
-## Simple usage
+## Development
 
-```javascript
-var Rsync = require('rsync');
+### Build
 
-// Build the command
-var rsync = new Rsync()
-  .shell('ssh')
-  .flags('az')
-  .source('/path/to/source')
-  .destination('server:/path/to/destination');
-
-// Execute the command
-rsync.execute(function(error, code, cmd) {
-    // we're done
-});
+```bash
+npm run build
 ```
 
-For more examples see the `examples` directory.
+### Test
 
-# API
-
-  * [constructor](#constructor)
-  * [instance methods](#instance-methods)
-  * [accessor methods](#accessor-methods)
-  * [static methods](#static-methods)
-
-## constructor
-
-Construct a new Rsync command instance. The constructor takes no arguments.
-
-```javascript
-var rsync = new Rsync();
+```bash
+npm test
 ```
 
-## instance methods
+### Contributing
 
-### set(option, value)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes with tests
+4. Run tests and type checking
+5. Submit a pull request
 
-Set an option. This can be any option from the rsync manual. The value is optional and only applies to options that take a value. This is not checked however. Supplying a value for an option that does not take a value will append the value regardless. This may cause errors when the command is executed.
+## Changelog
 
-```javascript
-rsync.set('a')
-  .set('progress')
-  .set('list-only')
-  .set('exclude-from', '/path/to/exclude-file');
-```
+### v1.0.0
 
-Options must be unique and setting the same option twice will override any existing value. For options that can be set multiple times special methods exist (see accessor methods). Any leading dashes (-) are stripped when setting the option.
+- Complete TypeScript rewrite
+- Promise-based API (breaking change)
+- Constructor options-only (breaking change)
+- Removed method chaining (breaking change)
+- Removed `patterns()` method, use `include`/`exclude` arrays
+- ESM modules only
+- Migrated to Vitest
 
-The `set` method is chainable.
+### v0.6.1
 
-### unset(option)
+- Add support for windows file paths under cygwin
 
-Unset an option. Any leading dashes (-) are stripped when unsetting an option.
+### v0.6.0
 
-```javascript
-rsync.unset('progress')
-  .unset('quiet');
-```
+- Escape dollar signs in filenames
+- Add permission shorthands
+- Added env() option to set the process environment variables
 
-The `unset` method is chainable.
+### v0.5.0
 
-### flags(flags, set)
-
-Set one or more flags. Flags are single letter options without a value, for example _compress_ (`-z`) or _archive_ (`-a`).
-
-The `flags` method is a polymorphic function: it can take different arguments to set flags.
-Flags can be presented as a single string with multiple flags, multiple strings as arguments, an array containing strings or an object with the flags as keys.
-
-Whether the presented flags need to be set or unset is determined based on the last argument, if this is a Boolean. When presenting the flags as an Object the value for each key (flag) determines if the flag is set or unset. This version can be used to mix setting and unsetting of flags in one statement.
-
-```javascript
-// As String
-rsync.flags('avz');        // set
-rsync.flags('avz', false); // unset
-
-// As String arguments
-rsync.flags('a', 'v', 'z');        // set
-rsync.flags('a', 'v', 'z', false); // unset
-
-// As Array
-rsync.flags(['a', 'v', 'z']);   // set
-rsync.flags(['a', 'z'], false); // unset
-
-// As Object
-rsync.flags({
-  'a': true, // set
-  'z': true, // set
-  'v': false // unset
-});
-```
-
-The `flags` method is chainable.
-
-### isSet(option)
-
-Check if an option is set.
-
-This method does not check alternate versions for an option. When an option is set as the short version this method will still return `false` when checking for the long version, event though they are the same option.
-
-```javascript
-rsync.set('quiet');
-rsync.isSet('quiet'); // is TRUE
-rsync.isSet('q');     // is FALSE
-```
-
-### option(option)
-
-Get the value for an option by name. If a valueless option is requested null will be returned.
-
-```javascript
-rsync.option('rsh');      // returns String value
-rsync.option('progress'); // returns NULL
-```
-
-### args()
-
-Get the arguments list for the command that is going to be executed. Returns an Array with the complete options that will be passed to the command.
-
-### command()
-
-Get the complete command that is going to be executed.
-
-```javascript
-var rsync = new Rsync()
-  .shell('ssh')
-  .flags('az')
-  .source('/p/t/source')
-  .destination('server:/p/t/dest');
-
-var c = rsync.command();
-// c is "rsync -az --rsh="ssh" /p/t/source server:/p/t/dest
-```
-
-### cwd(path)
-
-Set or get the value for rsync process cwd.
-
-```javascript
-rsync.cwd(__dirname); // Set cwd to __dirname
-rsync.cwd(); // Get cwd value
-```
-
-### env(envObj)
-
-Set or get the value for rsync process environment variables.
-
-Default: process.env
-
-```javascript
-rsync.env(process.env); // Set env to process.env
-rsync.env(); // Get env values
-```
-
-### output(stdoutHandler, stderrHandler)
-
-Register output handler functions for the commands stdout and stderr output. The handlers will be
-called with streaming data from the commands output when it is executed.
-
-```javascript
-rsync.output(
-    function(data){
-        // do things like parse progress
-    }, function(data) {
-        // do things like parse error output
-    }
-);
-```
-
-This method can be called with an array containing one or two functions. These functions will
-be treated as the stdoutHandler and stderrHandler arguments. This makes it possible to register
-handlers through the `Rsync.build` method by specifying the functions as an array.
-
-```javascript
-var rsync = Rsync.build({
-    // ...
-    output: [stdoutFunc, stderrFunc] // these are references to functions defined elsewhere
-    // ...
-});
-```
-
-### execute(callback, stdoutHandler, stderrHandler)
-
-Execute the command. The callback function is called with an Error object (or null when there
-was none), the exit code from the executed command and the executed command as a String.
-
-When `stdoutHandler` and `stderrHandler` functions are provided they will be used to stream
-data from stdout and stderr directly without buffering. Any output handlers that were
-defined previously will be overwritten.
-
-The function returns the child process object, which can be used to kill the
-rsync process or clean up if the main program exits early.
-
-```javascript
-// signal handler function
-var quitting = function() {
-  if (rsyncPid) {
-    rsyncPid.kill();
-  }
-  process.exit();
-}
-process.on("SIGINT", quitting); // run signal handler on CTRL-C
-process.on("SIGTERM", quitting); // run signal handler on SIGTERM
-process.on("exit", quitting); // run signal handler when main process exits
-
-// simple execute
-var rsyncPid = rsync.execute(function(error, code, cmd) {
-    // we're done
-});
-
-// execute with stream callbacks
-var rsyncPid = rsync.execute(
-    function(error, code, cmd) {
-        // we're done
-    }, function(data){
-        // do things like parse progress
-    }, function(data) {
-        // do things like parse error output
-    }
-);
-```
-
-## option shorthands
-
-The following option shorthand methods are available:
-
-  - **shell(value)**: `--rsh=SHELL`
-  - **delete()**: `--delete`
-  - **progress()**: `--progress`
-  - **archive()**: `-a`
-  - **compress()**: `-z`
-  - **recursive()**: `-r`
-  - **update()**: `-u`
-  - **quiet()**: `-q`
-  - **dirs()**: `-d`
-  - **links()**: `-l`
-  - **dry()**: `-n`
-  - **chmod(value)**: `--chmod=VALUE` (accumulative)
-  - **hardLinks()**: `-H`
-  - **perms()**: `-p`
-  - **executability()**: `-E`
-  - **owner()**: `-o`
-  - **group()**: `-g`
-  - **acls()**: `-A`
-  - **xattrs()**: `-X`
-  - **devices()**: `--devices`
-  - **specials**: `--specials`
-  - **times()**: `-t`
-
-
-All shorthand methods are chainable as long as options that require a value are provided with one.
-
-## accessor methods
-
-These methods can be used to get or set values in a chainable way. When the methods are called without arguments the current value is returned. When the methods are called with a value this will override the current value and the Rsync instance is returned to provide the chainability.
-
-### executable(executable)
-
-Get or set the executable to use as the rsync command.
-
-### executableShell(shell)
-
-Get or set the shell to use to launch the rsync command on non-Windows (Unix and Mac OS X) systems.  The default shell is /bin/sh.  
-
-On some systems (Debian, for example) /bin/sh links to /bin/dash, which does not do proper process control.  If you have problems with leftover processes, try a different shell such as /bin/bash.
-
-### destination(destination)
-
-Get or set the destination for the rsync command.
-
-### source(source)
-
-Get or set the source or sources for the rsync command. When this method is called multiple times with a value it is appended to the list of sources. It is also possible to present the list of source as an array where each value will be appended to the list of sources
-
-```javascript
-// chained
-rsync.source('/a/path')
-  .source('/b/path');
-
-// as Array
-rsync.source(['/a/path', '/b/path']);
-```
-
-In both cases the list of sources will contain two paths.
-
-### patterns(patterns)
-
-Register a list of file patterns to include/exclude in the transfer. Patterns can be registered as
-an array of Strings or Objects.
-
-When registering a pattern as a String it be prefixed with a `+` or `-` sign to
-signal include or exclude for the pattern. The sign will be stripped of and the
-pattern will be added to the ordered pattern list.
-
-When registering the pattern as an Object it must contain the `action` and
-`pattern` keys where `action` contains the `+` or `-` sign and the `pattern`
-key contains the file pattern, without the `+` or `-` sign.
-
-The order of patterns is important for some rsync commands. The patterns are stored in the order
-they are added either through the `patterns` method or the `include` and `exclude` methods. The
-`patterns` method can be used with `Rsync.build` to provide an ordered list for the command.
-
-```javascript
-// on an existing Rsync object
-rsync.patterns([ '-.git', { action: '+', pattern: '/some_dir' });
-
-// through Rsync.build
-var command = Rsync.build({
-    // ...
-    patterns: [ '-.git', { action: '+', pattern: '/some_dir' } ]
-    // ...
-});
-```
-### exclude(pattern)
-
-Exclude a pattern from transfer. When this method is called multiple times with a value it is
-appended to the list of patterns. It is also possible to present the list of excluded
-patterns as an array where each pattern will be appended to the list.
-
-```javascript
-// chained
-rsync.exclude('.git')
-  .exclude('.DS_Store');
-
-// as Array
-rsync.exclude(['.git', '.DS_Store']);
-```
-
-### include(pattern)
-
-Include a pattern for transfer. When this method is called multiple times with a value it is
-appended to the list of patterns. It is also possible to present the list of included patterns as
-an array where each pattern will be appended to the list.
-
-```javascript
-// chained
-rsync.include('/a/file')
-  .include('/b/file');
-
-// as Array
-rsync.include(['/a/file', '/b/file']);
-```
-
-### debug(flag)
-
-Get or set the debug flag. This is only used internally and must be a Boolean to set or unset.
-
-## static methods
-
-### build
-
-For convenience there is the `build` function on the Rsync contructor. This function can be
-used to create a new Rsync command instance from an options object.
-
-For each key in the options object the corresponding method on the Rsync instance will be
-called. When a function for the key does not exist it is ignored. An existing Rsync instance
-can optionally be provided.
-
-```javascript
-var rsync = Rsync.build({
-  source:      '/path/to/source',
-  destination: 'server:/path/to/destination',
-  exclude:     ['.git'],
-  flags:       'avz',
-  shell:       'ssh'
-});
-
-rsync.execute(function(error, stdout, stderr) {
-  // we're done
-});
-```
-
-# Development
-
-If there is something missing (which there probably is) just fork, patch and send a pull request.
-
-For adding a new shorthand method there are a few simple steps to take:
-- Fork
-- Add the option through the `exposeShortOption`, `exposeLongOption` or `exposeMultiOption` functions. For examples see the source file.
-- Update this README file to list the new shorthand method
-- Make a pull request
-
-When adding a shorthand make sure it does not already exist, it is a sane name and a shorthand is necessary.
-
-If there is something broken (which there probably is), the same applies: fork, patch, pull request. Opening an issue is also possible.
-
-# Changelog
-
-v0.6.1
-
-  - Add support for windows file paths under cygwin (#53)
-
-v0.6.0
-
-  - Escape dollar signs in filenames (#40)
-  - Add permission shorthands (#46)
-  - Added env() option to set the process environment variables (#51)
-
-v0.5.0
-
-  - Properly treat flags as String
-  - Differentiate between shell and file arguments (escaping)
-  - Added a bunch of unit tests
-  - Added TravisCI setup to run tests on branches and PRs
-  - Added cwd() option to set the process CWD (#36)
-
-v0.4.0
-
-  - Child process pid is returned from `execute` (#27)
-  - Command execution shell is configurable for Unix systems (#27)
-  - Better escaping for filenames with spaces (#24)
-
-v0.3.0
-
-  - Launch the command under a shell (#15)
-  - Typo fix isaArray -> isArray for issue (#14)
-  - Error: rsync exited with code 14 (#11)
-
-v0.2.0
-
-  - use spawn instead of exec (#6)
-
-v0.1.0
-
-  - better support for include/exclude filters
-  - better support for output handlers
-  - removed output buffering (#6)
-
-v0.0.2
-
-  - swapped exclude and include order
-  - better shell escaping
-
-v0.0.1
-
-  - initial version (actually the second)
+- Properly treat flags as String
+- Differentiate between shell and file arguments (escaping)
+- Added unit tests and TravisCI

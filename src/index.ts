@@ -1,23 +1,139 @@
-import { spawn } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import path from "node:path";
 
 /**
- * Rsync is a wrapper class to configure and execute an `rsync` command.
- *
- * @example
- *   const rsync = new Rsync({
- *     source: '/path/to/source',
- *     destination: 'myserver:destination/',
- *     flags: 'avz',
- *     shell: 'ssh'
- *   });
- *
- *   rsync.execute((error, code, cmd) => {
- *     // function called when the child process is finished
- *   });
+ * @exports
+ * @link https://linux.die.net/man/1/rsync
  */
+export interface RsyncOptions {
+	/** Source path(s) to sync from */
+	source?: string | string[];
+	/** Destination path to sync to */
+	destination?: string;
+	/** Path to rsync executable (default: 'rsync') */
+	executable?: string;
+	/** Shell to use for launching rsync on Unix systems (default: '/bin/sh') */
+	executableShell?: string;
+	/** Working directory for the rsync process */
+	cwd?: string;
+	/** Environment variables for the rsync process */
+	env?: NodeJS.ProcessEnv;
+	/** Single letter flags as a combined string (e.g., 'avz') */
+	flags?: string;
+	/** Remote shell to use (sets --rsh option) */
+	shell?: string;
+	/** Delete extraneous files from destination (--delete) */
+	delete?: boolean;
+	/** Show progress during transfer (--progress) */
+	progress?: boolean;
+	/** Archive mode (-a) - equals -rlptgoD */
+	archive?: boolean;
+	/** Archive mode (shorthand for archive) */
+	a?: boolean;
+	/** Compress file data during transfer (-z) */
+	compress?: boolean;
+	/** Compress (shorthand for compress) */
+	z?: boolean;
+	/** Recurse into directories (-r) */
+	recursive?: boolean;
+	/** Recursive (shorthand for recursive) */
+	r?: boolean;
+	/** Skip files that are newer on receiver (-u) */
+	update?: boolean;
+	/** Update (shorthand for update) */
+	u?: boolean;
+	/** Suppress non-error messages (-q) */
+	quiet?: boolean;
+	/** Quiet (shorthand for quiet) */
+	q?: boolean;
+	/** Transfer directories without recursing (-d) */
+	dirs?: boolean;
+	/** Dirs (shorthand for dirs) */
+	d?: boolean;
+	/** Copy symlinks as symlinks (-l) */
+	links?: boolean;
+	/** Links (shorthand for links) */
+	l?: boolean;
+	/** Perform a trial run with no changes made (-n) */
+	dry?: boolean;
+	/** Dry run (shorthand for dry) */
+	n?: boolean;
+	/** Preserve hard links (-H) */
+	hardLinks?: boolean;
+	/** Hard links (shorthand for hardLinks) */
+	H?: boolean;
+	/** Preserve permissions (-p) */
+	perms?: boolean;
+	/** Perms (shorthand for perms) */
+	p?: boolean;
+	/** Preserve executability (-E) */
+	executability?: boolean;
+	/** Executability (shorthand for executability) */
+	E?: boolean;
+	/** Preserve group (-g) */
+	group?: boolean;
+	/** Group (shorthand for group) */
+	g?: boolean;
+	/** Preserve owner (-o) */
+	owner?: boolean;
+	/** Owner (shorthand for owner) */
+	o?: boolean;
+	/** Preserve ACLs (-A) */
+	acls?: boolean;
+	/** ACLs (shorthand for acls) */
+	A?: boolean;
+	/** Preserve extended attributes (-X) */
+	xattrs?: boolean;
+	/** Extended attributes (shorthand for xattrs) */
+	X?: boolean;
+	/** Preserve device files (--devices) */
+	devices?: boolean;
+	/** Preserve special files (--specials) */
+	specials?: boolean;
+	/** Preserve modification times (-t) */
+	times?: boolean;
+	/** Times (shorthand for times) */
+	t?: boolean;
+	/** Set file/directory permissions (--chmod) */
+	chmod?: string | string[];
+	/** Exclude files matching pattern(s) */
+	exclude?: string | string[];
+	/** Include files matching pattern(s) */
+	include?: string | string[];
+	/** Output handlers for stdout and stderr */
+	output?: [(data: Buffer) => void, (data: Buffer) => void];
+	/** Custom rsync options as key-value pairs */
+	set?: Record<string, string | null>;
+}
+
+export interface RsyncResult {
+	code: number;
+	cmd: string;
+}
+
+export interface RsyncError extends Error {
+	code: number;
+	cmd: string;
+}
+
+type OutputHandler = (data: Buffer) => void;
+
 class Rsync {
-	constructor(options = {}) {
+	private _executable: string;
+	private _executableShell: string;
+	private _sources: string[];
+	private _destination: string;
+	private _includes: string[];
+	private _excludes: string[];
+	private _options: Record<string, string | string[] | null>;
+	private _outputHandlers: {
+		stdout: OutputHandler | null;
+		stderr: OutputHandler | null;
+	};
+	private _cwd: string;
+	private _env: NodeJS.ProcessEnv;
+
+	constructor(options: RsyncOptions = {}) {
 		if (typeof options !== "object" || Array.isArray(options)) {
 			throw new Error("Rsync options must be an Object");
 		}
@@ -35,12 +151,11 @@ class Rsync {
 		};
 		this._cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
 		this._env = options.env || process.env;
-		this._debug = options.debug || false;
 
 		this._processOptions(options);
 	}
 
-	_processOptions(options) {
+	private _processOptions(options: RsyncOptions): void {
 		if (options.source) {
 			if (Array.isArray(options.source)) {
 				this._sources = [...options.source];
@@ -55,9 +170,9 @@ class Rsync {
 
 		if (options.flags) {
 			const flags = options.flags.split("");
-			flags.forEach((flag) => {
+			for (const flag of flags) {
 				this._options[flag] = null;
-			});
+			}
 		}
 
 		if (options.shell) {
@@ -184,54 +299,30 @@ class Rsync {
 		}
 	}
 
-	/**
-	 * Get the command that is going to be executed.
-	 * @return {String}
-	 */
-	command() {
+	command(): string {
 		return `${this.executable()} ${this.args().join(" ")}`;
 	}
 
-	/**
-	 * String representation of the Rsync command.
-	 * @return {String}
-	 */
-	toString() {
+	toString(): string {
 		return this.command();
 	}
 
-	/**
-	 * Get the executable.
-	 * @return {String}
-	 */
-	executable() {
+	executable(): string {
 		return this._executable;
 	}
 
-	/**
-	 * Get the source(s).
-	 * @return {Array}
-	 */
-	source() {
+	source(): string[] {
 		return this._sources;
 	}
 
-	/**
-	 * Get the destination.
-	 * @return {String}
-	 */
-	destination() {
+	destination(): string {
 		return this._destination;
 	}
 
-	/**
-	 * Get the arguments for the rsync command.
-	 * @return {Array}
-	 */
-	args() {
-		const args = [];
-		const short = [];
-		const long = [];
+	args(): string[] {
+		const args: string[] = [];
+		const short: string[] = [];
+		const long: string[] = [];
 
 		for (const [key, value] of Object.entries(this._options)) {
 			const noval = value === null || value === undefined;
@@ -240,9 +331,9 @@ class Rsync {
 				short.push(key);
 			} else {
 				if (Array.isArray(value)) {
-					value.forEach((val) => {
+					for (const val of value) {
 						long.push(buildOption(key, val, escapeShellArg));
-					});
+					}
 				} else {
 					long.push(buildOption(key, value, escapeShellArg));
 				}
@@ -257,13 +348,13 @@ class Rsync {
 			args.push(...long);
 		}
 
-		this._excludes.forEach((pattern) => {
+		for (const pattern of this._excludes) {
 			args.push(buildOption("exclude", pattern, escapeFileArg));
-		});
+		}
 
-		this._includes.forEach((pattern) => {
+		for (const pattern of this._includes) {
 			args.push(buildOption("include", pattern, escapeFileArg));
-		});
+		}
 
 		if (this._sources.length > 0) {
 			args.push(...this._sources.map(escapeFileArg));
@@ -276,14 +367,10 @@ class Rsync {
 		return args;
 	}
 
-	/**
-	 * Execute the rsync command.
-	 *
-	 * @param {Function} stdoutHandler Called on each chunk received from stdout (optional)
-	 * @param {Function} stderrHandler Called on each chunk received from stderr (optional)
-	 * @return {Promise<{code: number, cmd: string}>}
-	 */
-	execute(stdoutHandler, stderrHandler) {
+	execute(
+		stdoutHandler?: OutputHandler,
+		stderrHandler?: OutputHandler,
+	): Promise<RsyncResult> {
 		if (typeof stdoutHandler === "function") {
 			this._outputHandlers.stdout = stdoutHandler;
 		}
@@ -292,7 +379,7 @@ class Rsync {
 		}
 
 		return new Promise((resolve, reject) => {
-			let cmdProc;
+			let cmdProc: ChildProcess;
 			if (process.platform === "win32") {
 				cmdProc = spawn("cmd.exe", ["/s", "/c", `"${this.command()}"`], {
 					stdio: "pipe",
@@ -309,20 +396,22 @@ class Rsync {
 			}
 
 			if (typeof this._outputHandlers.stdout === "function") {
-				cmdProc.stdout.on("data", this._outputHandlers.stdout);
+				cmdProc.stdout?.on("data", this._outputHandlers.stdout);
 			}
 			if (typeof this._outputHandlers.stderr === "function") {
-				cmdProc.stderr.on("data", this._outputHandlers.stderr);
+				cmdProc.stderr?.on("data", this._outputHandlers.stderr);
 			}
 
 			cmdProc.on("close", (code) => {
 				if (code !== 0) {
-					const error = new Error(`rsync exited with code ${code}`);
-					error.code = code;
+					const error = new Error(
+						`rsync exited with code ${code}`,
+					) as RsyncError;
+					error.code = code ?? -1;
 					error.cmd = this.command();
 					reject(error);
 				} else {
-					resolve({ code, cmd: this.command() });
+					resolve({ code: code ?? 0, cmd: this.command() });
 				}
 			});
 
@@ -335,7 +424,13 @@ class Rsync {
 
 export default Rsync;
 
-function buildOption(name, value, escapeArg) {
+type EscapeFunction = (value: string) => string;
+
+function buildOption(
+	name: string,
+	value: string | null,
+	escapeArg: EscapeFunction,
+): string {
 	const single = name.length === 1;
 	const prefix = single ? "-" : "--";
 	const glue = single ? " " : "=";
@@ -349,14 +444,14 @@ function buildOption(name, value, escapeArg) {
 	return option;
 }
 
-function escapeShellArg(arg) {
+function escapeShellArg(arg: string): string {
 	if (!/(["'`\\$ ])/.test(arg)) {
 		return arg;
 	}
 	return `"${arg.replace(/(["'`\\$])/g, "\\$1")}"`;
 }
 
-function escapeFileArg(filename) {
+function escapeFileArg(filename: string): string {
 	filename = filename.replace(/(["'`\s\\()\\$])/g, "\\$1");
 	if (!/(\\\\)/.test(filename)) {
 		return filename;

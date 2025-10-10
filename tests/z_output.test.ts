@@ -1,6 +1,6 @@
 import { describe, it } from "vitest";
-import Rsync from "../rsync.js";
-import { assertOutput } from "./helpers/output.js";
+import Rsync from "../src/index.js";
+import { assertOutput } from "./helpers/output";
 
 const testCases = [
 	{

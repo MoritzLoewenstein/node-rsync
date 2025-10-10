@@ -7,7 +7,7 @@
  * and executed command string.
  */
 
-import Rsync from "../rsync.js";
+import Rsync from "../dist/index.js";
 
 const cmd = new Rsync({
 	flags: "avz",
@@ -20,7 +20,8 @@ try {
 	const result = await cmd.execute();
 	console.log("All done executing", result.cmd);
 } catch (error) {
-	console.error("Error executing rsync:", error.message);
+	const err = error as Error;
+	console.error("Error executing rsync:", err.message);
 }
 
 const cmd2 = new Rsync({
@@ -38,6 +39,6 @@ cmd2
 	.then((result) => {
 		console.log("All done executing", result.cmd);
 	})
-	.catch((error) => {
+	.catch((error: Error) => {
 		console.error("Error:", error.message);
 	});
