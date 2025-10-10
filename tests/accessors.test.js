@@ -1,68 +1,59 @@
-/*global describe,it*/
-'use strict';
-var Rsync = require('../rsync');
-var assert = require('chai').assert;
-var assertOutput = require('./helpers/output').assertOutput;
-var path = require('path');
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "vitest";
+import Rsync from "../rsync.js";
+import { assertOutput } from "./helpers/output.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-describe('accessors', function () {
+describe("accessors", () => {
+	describe("#executable", () => {
+		it("should set the executable to use", () => {
+			const rsync = new Rsync({
+				source: "a.txt",
+				destination: "b.txt",
+				executable: "/usr/local/bin/rsync",
+			});
 
-    describe('#executable', function () {
+			expect(rsync.executable()).toBe("/usr/local/bin/rsync");
+			assertOutput(rsync, "/usr/local/bin/rsync a.txt b.txt");
+		});
+	});
 
-      it('should set the executable to use', function () {
-        var rsync = Rsync.build({
-          'source':      'a.txt',
-          'destination': 'b.txt',
-          'executable':  '/usr/local/bin/rsync'
-        });
+	describe("#executableShell", () => {
+		it("should set the executable shell to use", () => {
+			const rsync = new Rsync({
+				source: "a.txt",
+				destination: "b.txt",
+				executableShell: "/bin/zsh",
+			});
 
-        assert.equal('/usr/local/bin/rsync', rsync.executable(), 'executable was set');
-        assertOutput(rsync, '/usr/local/bin/rsync a.txt b.txt');
-      });
+			expect(rsync._executableShell).toBe("/bin/zsh");
+		});
+	});
 
-    });
+	describe("#cwd", () => {
+		it("should set the cwd to use", () => {
+			const rsync = new Rsync({
+				source: "a.txt",
+				destination: "b.txt",
+				cwd: `${__dirname}/..`,
+			});
 
-    describe('#executableShell', function () {
+			expect(rsync._cwd).toBe(path.resolve(__dirname, ".."));
+		});
+	});
 
-      it('should set the the executable shell to use', function () {
-        var rsync = Rsync.build({
-          'source':           'a.txt',
-          'destination':      'b.txt',
-          'executableShell':  '/bin/zsh'
-        });
+	describe("#env", () => {
+		it("should set the env variables to use", () => {
+			const rsync = new Rsync({
+				source: "a.txt",
+				destination: "b.txt",
+				env: { red: "blue" },
+			});
 
-        assert.equal('/bin/zsh', rsync.executableShell(), 'executableShell was set');
-      });
-
-    });
-
-    describe('#cwd', function () {
-
-      it('should set the the cwd to use', function () {
-        var rsync = Rsync.build({
-          'source':           'a.txt',
-          'destination':      'b.txt',
-          'cwd':  __dirname + '/..'
-        });
-
-        assert.equal(path.resolve(__dirname, '..'), rsync.cwd(), 'cwd was set');
-      });
-
-    });
-
-    describe('#env', function () {
-
-      it('should set the the env variables to use', function () {
-        var rsync = Rsync.build({
-          'source':           'a.txt',
-          'destination':      'b.txt',
-          'env': {'red': 'blue'}
-        });
-
-        assert.equal('blue', rsync.env().red, 'env was set');
-      });
-
-    });
-
+			expect(rsync._env.red).toBe("blue");
+		});
+	});
 });

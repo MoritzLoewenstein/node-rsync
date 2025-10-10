@@ -3,42 +3,41 @@
  *
  *     rsync -avz --rsh 'ssh' /path/to/source you@server:/destination/path
  *
- * The `execute` method receives an Error object when an error ocurred, the
- * exit code from the executed command and the executed command as a String.
- *
- * The `shell` method is a shorthand for using `set('rsh', 'ssh')`.
+ * The `execute` method returns a Promise that resolves with the exit code
+ * and executed command string.
  */
 
-var Rsync = require('../rsync');
-var cmd;
+import Rsync from "../rsync.js";
 
-/*
- * Set up the command using the fluent interface, starting with an
- * empty command wrapper and adding options using methods.
- */
-cmd = new Rsync()
-    .flags('avz')
-    .shell('ssh')
-    .source('/path/to/source')
-    .destination('you@server:/destination/path');
-
-cmd.execute(function(error, code, cmd) {
-    console.log('All done executing', cmd);
+const cmd = new Rsync({
+	flags: "avz",
+	shell: "ssh",
+	source: "/path/to/source",
+	destination: "you@server:/destination/path",
 });
 
-/*
- * The same command can be set up by using the build method.
- *
- * This method takes an Object containing the configuration for the
- * Rsync command it returns.
- */
-cmd = Rsync.build({
-    'flags': 'avz',
-    'shell': 'ssh',
-    'source': '/path/tp/source',
-    'destination': 'you@server:/destination/path'
-})
+try {
+	const result = await cmd.execute();
+	console.log("All done executing", result.cmd);
+} catch (error) {
+	console.error("Error executing rsync:", error.message);
+}
 
-cmd.execute(function(error, code, cmd) {
-    console.log('All done executing', cmd);
+const cmd2 = new Rsync({
+	flags: "avz",
+	shell: "ssh",
+	source: "/path/to/source",
+	destination: "you@server:/destination/path",
+	exclude: ["*.tmp", "*.log"],
+	delete: true,
+	progress: true,
 });
+
+cmd2
+	.execute()
+	.then((result) => {
+		console.log("All done executing", result.cmd);
+	})
+	.catch((error) => {
+		console.error("Error:", error.message);
+	});

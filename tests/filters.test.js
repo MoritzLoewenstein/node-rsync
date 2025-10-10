@@ -1,98 +1,96 @@
-/*global describe,it,beforeEach,xdescribe,xit*/
-'use strict';
-var assert = require('chai').assert;
-var assertOutput = require('./helpers/output').assertOutput;
+import { describe, expect, it } from "vitest";
+import Rsync from "../rsync.js";
+import { assertOutput } from "./helpers/output.js";
 
-var Rsync  = require('../rsync');
+describe("filters", () => {
+	describe("exclude", () => {
+		it("should accept single exclude pattern", () => {
+			const command = new Rsync({
+				source: "SOURCE",
+				destination: "DESTINATION",
+				exclude: ".git",
+			});
+			expect(command._excludes).toHaveLength(1);
+		});
 
-describe('filters', function () {
-    var command;
+		it("should accept exclude patterns as an array", () => {
+			const command = new Rsync({
+				source: "SOURCE",
+				destination: "DESTINATION",
+				exclude: [".build", "docs"],
+			});
+			expect(command._excludes).toHaveLength(2);
+		});
 
-    beforeEach(function () {
-        command = Rsync.build({
-            'source':      'SOURCE',
-            'destination': 'DESTINATION'
-        });
-    });
+		it("should add exclude patterns to output in order added", () => {
+			const command = new Rsync({
+				source: "SOURCE",
+				destination: "DESTINATION",
+				exclude: [".git", "docs", "/tests/*.test.js"],
+			});
+			assertOutput(
+				command,
+				"rsync --exclude=.git --exclude=docs --exclude=/tests/*.test.js SOURCE DESTINATION",
+			);
+		});
 
-    describe('#patterns', function () {
+		it("should escape filenames", () => {
+			const command = new Rsync({
+				source: "SOURCE",
+				destination: "DESTINATION",
+				exclude: ["with space", "tests/* test.js"],
+			});
+			assertOutput(
+				command,
+				"rsync --exclude=with\\ space --exclude=tests/*\\ test.js SOURCE DESTINATION",
+			);
+		});
+	});
 
-        it('should interpret the first character', function () {
-            command.patterns(['-.git', '+/tests/*.test.js']);
-            assert.lengthOf(command._patterns, 2);
-        });
+	describe("include", () => {
+		it("should accept single include pattern", () => {
+			const command = new Rsync({
+				source: "SOURCE",
+				destination: "DESTINATION",
+				include: ".git",
+			});
+			expect(command._includes).toHaveLength(1);
+		});
 
-        it('should be able to be set as an Object', function () {
-            command.patterns([
-                { 'action': '+', 'pattern': '.git' },
-                { 'action': '-', 'pattern': '/tests/*.test' }
-            ]);
-            assert.lengthOf(command._patterns, 2);
-        });
+		it("should accept include patterns as an array", () => {
+			const command = new Rsync({
+				source: "SOURCE",
+				destination: "DESTINATION",
+				include: [".build", "docs"],
+			});
+			expect(command._includes).toHaveLength(2);
+		});
 
-        it('should throw an error for invalid patterns', function () {
-            assert.throw(function () {
-                command.patterns(['*invalid']);
-            }, /^invalid pattern:/i);
-        });
+		it("should add include patterns to output in order added", () => {
+			const command = new Rsync({
+				source: "SOURCE",
+				destination: "DESTINATION",
+				include: [".git", "docs", "/tests/*.test.js"],
+			});
+			assertOutput(
+				command,
+				"rsync --include=.git --include=docs --include=/tests/*.test.js SOURCE DESTINATION",
+			);
+		});
+	});
 
-        it('should add patterns to output in order added', function () {
-            command.patterns([
-                { 'action': '-', 'pattern': '.git' },
-                { 'action': '+', 'pattern': '/tests/*.test.js' },
-                '-build/*'
-            ]);
-            assertOutput(command, 'rsync --exclude=.git --include=/tests/*.test.js --exclude=build/* SOURCE DESTINATION');
-        });
-
-    });
-
-    describe('#exclude', function () {
-
-        it('should accept patterns as arguments', function () {
-            command.exclude('.git', '.out');
-            assert.lengthOf(command._patterns, 2);
-        });
-
-        it ('should accept patterns as an Array', function () {
-            command.exclude(['.build', 'docs']);
-            assert.lengthOf(command._patterns, 2);
-        });
-
-        it('should add patterns to output in order added', function () {
-            command.exclude('.git', 'docs', '/tests/*.test.js');
-            assertOutput(command, 'rsync --exclude=.git --exclude=docs --exclude=/tests/*.test.js SOURCE DESTINATION');
-        });
-
-        it('should escape filenames', function () {
-            command.exclude('with space', 'tests/* test.js');
-            assertOutput(command, 'rsync --exclude=with\\ space --exclude=tests/*\\ test.js SOURCE DESTINATION');
-        });
-
-    });
-
-    describe('#include', function () {
-
-        it('should accept patterns as arguments', function () {
-            command.include('.git', '.out');
-            assert.lengthOf(command._patterns, 2);
-        });
-
-        it ('should accept patterns as an Array', function () {
-            command.include(['.build', 'docs']);
-            assert.lengthOf(command._patterns, 2);
-        });
-
-        it('should add patterns to output in order added', function () {
-            command.include('LICENSE', 'README.md', 'rsync.js');
-            assertOutput(command, 'rsync --include=LICENSE --include=README.md --include=rsync.js SOURCE DESTINATION');
-        });
-
-        it('should escape filenames', function () {
-            command.include('LICENSE FILE', '/tests/* test.js');
-            assertOutput(command, 'rsync --include=LICENSE\\ FILE --include=/tests/*\\ test.js SOURCE DESTINATION');
-        });
-
-    });
-
+	describe("mixed include/exclude", () => {
+		it("should output all excludes then all includes", () => {
+			const command = new Rsync({
+				source: "SOURCE",
+				destination: "DESTINATION",
+				exclude: [".git", "build/*"],
+				include: ["/tests/*.test.js", "*.md"],
+			});
+			assertOutput(
+				command,
+				"rsync --exclude=.git --exclude=build/* --include=/tests/*.test.js --include=*.md SOURCE DESTINATION",
+			);
+		});
+	});
 });

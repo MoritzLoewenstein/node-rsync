@@ -1,8 +1,4 @@
-"use strict";
-/* jshint strict: true */
-var assert = require('chai').assert;
-
-var output = module.exports;
+import { expect } from "vitest";
 
 /**
  * Assert the exact output of a command against an expectation.
@@ -11,14 +7,19 @@ var output = module.exports;
  * @param {String|Function} expectation
  * @param {String} message
  */
-output.assertOutput = function (command, expectation, message) {
-  command     = isFunction(command) ? command() : command;
-  expectation = isFunction(expectation) ? expectation() : expectation;
-  message     = message || 'expected |' + command.command() + '| to equal |' + expectation + '|';
+export function assertOutput(command, expectation, message) {
+	command = isFunction(command) ? command() : command;
+	expectation = isFunction(expectation) ? expectation() : expectation;
+	const actual = command.command();
 
-  return assert.strictEqual(command.command(), expectation, message);
-};
-output.assertExactOutput = output.assertOutput;
+	if (message) {
+		expect(actual, message).toBe(expectation);
+	} else {
+		expect(actual).toBe(expectation);
+	}
+}
+
+export const assertExactOutput = assertOutput;
 
 /**
  * Assert the exact output of a command against an expectation.
@@ -27,15 +28,18 @@ output.assertExactOutput = output.assertOutput;
  * @param {RegExp|Function} expectation
  * @param {String} message
  */
-output.assertOutputPattern = function (command, expectation, message) {
-  command     = isFunction(command) ? command() : command;
-  expectation = isFunction(expectation) ? expectation() : expectation;
-  message     = message || 'expected |' + command.command() + '| to match |' + String(expectation) + '|';
+export function assertOutputPattern(command, expectation, message) {
+	command = isFunction(command) ? command() : command;
+	expectation = isFunction(expectation) ? expectation() : expectation;
+	const actual = command.command();
 
-  return assert(expectation.test(command.command()), message);
-};
-
+	if (message) {
+		expect(actual, message).toMatch(expectation);
+	} else {
+		expect(actual).toMatch(expectation);
+	}
+}
 
 function isFunction(input) {
-  return typeof input === 'function';
+	return typeof input === "function";
 }
