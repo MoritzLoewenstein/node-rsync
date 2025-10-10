@@ -62,8 +62,8 @@ interface RsyncOptions {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
 
-  // Flags (single string of letters)
-  flags?: string; // e.g., 'avz'
+  // Flags (string or array of single letter flags)
+  flags?: string | string[]; // e.g., 'avz' or ['a', 'v', 'z']
 
   // Common options
   shell?: string; // SSH shell

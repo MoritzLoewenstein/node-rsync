@@ -1,24 +1,29 @@
 import { describe, expect, it } from "vitest";
 import Rsync from "../src/index.js";
-import { assertOutput } from "./helpers/output";
+import { assertOutput } from "./helpers/output.ts";
+import { exposePrivates } from "./test-utils.js";
 
 describe("filters", () => {
 	describe("exclude", () => {
 		it("should accept single exclude pattern", () => {
-			const command = new Rsync({
-				source: "SOURCE",
-				destination: "DESTINATION",
-				exclude: ".git",
-			});
+			const command = exposePrivates(
+				new Rsync({
+					source: "SOURCE",
+					destination: "DESTINATION",
+					exclude: ".git",
+				}),
+			);
 			expect(command._excludes).toHaveLength(1);
 		});
 
 		it("should accept exclude patterns as an array", () => {
-			const command = new Rsync({
-				source: "SOURCE",
-				destination: "DESTINATION",
-				exclude: [".build", "docs"],
-			});
+			const command = exposePrivates(
+				new Rsync({
+					source: "SOURCE",
+					destination: "DESTINATION",
+					exclude: [".build", "docs"],
+				}),
+			);
 			expect(command._excludes).toHaveLength(2);
 		});
 
@@ -49,20 +54,24 @@ describe("filters", () => {
 
 	describe("include", () => {
 		it("should accept single include pattern", () => {
-			const command = new Rsync({
-				source: "SOURCE",
-				destination: "DESTINATION",
-				include: ".git",
-			});
+			const command = exposePrivates(
+				new Rsync({
+					source: "SOURCE",
+					destination: "DESTINATION",
+					include: ".git",
+				}),
+			);
 			expect(command._includes).toHaveLength(1);
 		});
 
 		it("should accept include patterns as an array", () => {
-			const command = new Rsync({
-				source: "SOURCE",
-				destination: "DESTINATION",
-				include: [".build", "docs"],
-			});
+			const command = exposePrivates(
+				new Rsync({
+					source: "SOURCE",
+					destination: "DESTINATION",
+					include: [".build", "docs"],
+				}),
+			);
 			expect(command._includes).toHaveLength(2);
 		});
 

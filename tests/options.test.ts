@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import Rsync from "../src/index.js";
+import Rsync from "../src/index.ts";
+import { exposePrivates } from "./test-utils.js";
 
 describe("options", () => {
 	describe("constructor", () => {
@@ -9,64 +10,79 @@ describe("options", () => {
 		});
 
 		it("should throw an error if options is not an object", () => {
-			expect(() => new Rsync("string")).toThrow(/must be an Object/);
-			expect(() => new Rsync([])).toThrow(/must be an Object/);
+			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
+			expect(() => new Rsync("string" as any)).toThrow(/must be an Object/);
+			// biome-ignore lint/suspicious/noExplicitAny: testing invalid input
+			expect(() => new Rsync([] as any)).toThrow(/must be an Object/);
 		});
 
 		it("should set flags from string", () => {
-			const command = new Rsync({ flags: "avz" });
+			const command = exposePrivates(new Rsync({ flags: "avz" }));
+			expect(command._options).toHaveProperty("a");
+			expect(command._options).toHaveProperty("v");
+			expect(command._options).toHaveProperty("z");
+		});
+
+		it("should set flags from array", () => {
+			const command = exposePrivates(new Rsync({ flags: ["a", "v", "z"] }));
 			expect(command._options).toHaveProperty("a");
 			expect(command._options).toHaveProperty("v");
 			expect(command._options).toHaveProperty("z");
 		});
 
 		it("should set shell option", () => {
-			const command = new Rsync({ shell: "ssh" });
+			const command = exposePrivates(new Rsync({ shell: "ssh" }));
 			expect(command._options).toHaveProperty("rsh", "ssh");
 		});
 
 		it("should set source", () => {
-			const command = new Rsync({ source: "/path/to/source" });
+			const command = exposePrivates(new Rsync({ source: "/path/to/source" }));
 			expect(command._sources).toEqual(["/path/to/source"]);
 		});
 
 		it("should set multiple sources", () => {
-			const command = new Rsync({ source: ["/path/one", "/path/two"] });
+			const command = exposePrivates(
+				new Rsync({ source: ["/path/one", "/path/two"] }),
+			);
 			expect(command._sources).toEqual(["/path/one", "/path/two"]);
 		});
 
 		it("should set destination", () => {
-			const command = new Rsync({ destination: "/path/to/dest" });
+			const command = exposePrivates(
+				new Rsync({ destination: "/path/to/dest" }),
+			);
 			expect(command._destination).toBe("/path/to/dest");
 		});
 
 		it("should set delete option", () => {
-			const command = new Rsync({ delete: true });
+			const command = exposePrivates(new Rsync({ delete: true }));
 			expect(command._options).toHaveProperty("delete");
 		});
 
 		it("should set progress option", () => {
-			const command = new Rsync({ progress: true });
+			const command = exposePrivates(new Rsync({ progress: true }));
 			expect(command._options).toHaveProperty("progress");
 		});
 
 		it("should set archive option", () => {
-			const command = new Rsync({ archive: true });
+			const command = exposePrivates(new Rsync({ archive: true }));
 			expect(command._options).toHaveProperty("a");
 		});
 
 		it("should set compress option", () => {
-			const command = new Rsync({ compress: true });
+			const command = exposePrivates(new Rsync({ compress: true }));
 			expect(command._options).toHaveProperty("z");
 		});
 
 		it("should set recursive option", () => {
-			const command = new Rsync({ recursive: true });
+			const command = exposePrivates(new Rsync({ recursive: true }));
 			expect(command._options).toHaveProperty("r");
 		});
 
 		it("should set custom options via set property", () => {
-			const command = new Rsync({ set: { "max-size": "1009", inplace: null } });
+			const command = exposePrivates(
+				new Rsync({ set: { "max-size": "1009", inplace: null } }),
+			);
 			expect(command._options).toHaveProperty("max-size", "1009");
 			expect(command._options).toHaveProperty("inplace");
 		});

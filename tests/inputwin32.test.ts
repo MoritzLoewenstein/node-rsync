@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, it } from "vitest";
 import Rsync from "../src/index.js";
-import { assertOutputPattern } from "./helpers/output";
+import { assertOutputPattern } from "./helpers/output.ts";
 
 describe("inputwin32", () => {
 	let originalPlatform: NodeJS.Platform;

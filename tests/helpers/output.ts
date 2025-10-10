@@ -17,7 +17,7 @@ export function assertOutput(
 	}
 }
 
-export const assertExactOutput = assertOutput;
+export const assertExactOutput: typeof assertOutput = assertOutput;
 
 export function assertOutputPattern(
 	command: Rsync | (() => Rsync),

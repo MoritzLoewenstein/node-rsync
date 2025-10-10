@@ -2,7 +2,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import Rsync from "../src/index.js";
-import { assertOutput } from "./helpers/output";
+import { assertOutput } from "./helpers/output.ts";
+import { exposePrivates } from "./test-utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,11 +24,13 @@ describe("accessors", () => {
 
 	describe("#executableShell", () => {
 		it("should set the executable shell to use", () => {
-			const rsync = new Rsync({
-				source: "a.txt",
-				destination: "b.txt",
-				executableShell: "/bin/zsh",
-			});
+			const rsync = exposePrivates(
+				new Rsync({
+					source: "a.txt",
+					destination: "b.txt",
+					executableShell: "/bin/zsh",
+				}),
+			);
 
 			expect(rsync._executableShell).toBe("/bin/zsh");
 		});
@@ -35,11 +38,13 @@ describe("accessors", () => {
 
 	describe("#cwd", () => {
 		it("should set the cwd to use", () => {
-			const rsync = new Rsync({
-				source: "a.txt",
-				destination: "b.txt",
-				cwd: `${__dirname}/..`,
-			});
+			const rsync = exposePrivates(
+				new Rsync({
+					source: "a.txt",
+					destination: "b.txt",
+					cwd: `${__dirname}/..`,
+				}),
+			);
 
 			expect(rsync._cwd).toBe(path.resolve(__dirname, ".."));
 		});
@@ -47,11 +52,13 @@ describe("accessors", () => {
 
 	describe("#env", () => {
 		it("should set the env variables to use", () => {
-			const rsync = new Rsync({
-				source: "a.txt",
-				destination: "b.txt",
-				env: { red: "blue" },
-			});
+			const rsync = exposePrivates(
+				new Rsync({
+					source: "a.txt",
+					destination: "b.txt",
+					env: { red: "blue" },
+				}),
+			);
 
 			expect(rsync._env.red).toBe("blue");
 		});

@@ -18,8 +18,8 @@ export interface RsyncOptions {
 	cwd?: string;
 	/** Environment variables for the rsync process */
 	env?: NodeJS.ProcessEnv;
-	/** Single letter flags as a combined string (e.g., 'avz') */
-	flags?: string;
+	/** Single letter flags as a string (e.g., 'avz') or array (e.g., ['a', 'v', 'z']) */
+	flags?: string | string[];
 	/** Remote shell to use (sets --rsh option) */
 	shell?: string;
 	/** Delete extraneous files from destination (--delete) */
@@ -137,7 +137,9 @@ class Rsync {
 		}
 
 		if (options.flags) {
-			const flags = options.flags.split("");
+			const flags = Array.isArray(options.flags)
+				? options.flags
+				: options.flags.split("");
 			for (const flag of flags) {
 				this._options[flag] = null;
 			}

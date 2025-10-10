@@ -1,6 +1,6 @@
 import { describe, it } from "vitest";
 import Rsync from "../src/index.js";
-import { assertOutput, assertOutputPattern } from "./helpers/output";
+import { assertOutput, assertOutputPattern } from "./helpers/output.ts";
 
 describe("shorthands", () => {
 	describe("shell", () => {
