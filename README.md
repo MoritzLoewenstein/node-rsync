@@ -61,7 +61,6 @@ interface RsyncOptions {
   // Process configuration
   cwd?: string;
   env?: NodeJS.ProcessEnv;
-  debug?: boolean;
 
   // Flags (single string of letters)
   flags?: string; // e.g., 'avz'

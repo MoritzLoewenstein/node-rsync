@@ -28,72 +28,40 @@ export interface RsyncOptions {
 	progress?: boolean;
 	/** Archive mode (-a) - equals -rlptgoD */
 	archive?: boolean;
-	/** Archive mode (shorthand for archive) */
-	a?: boolean;
 	/** Compress file data during transfer (-z) */
 	compress?: boolean;
-	/** Compress (shorthand for compress) */
-	z?: boolean;
 	/** Recurse into directories (-r) */
 	recursive?: boolean;
-	/** Recursive (shorthand for recursive) */
-	r?: boolean;
 	/** Skip files that are newer on receiver (-u) */
 	update?: boolean;
-	/** Update (shorthand for update) */
-	u?: boolean;
 	/** Suppress non-error messages (-q) */
 	quiet?: boolean;
-	/** Quiet (shorthand for quiet) */
-	q?: boolean;
 	/** Transfer directories without recursing (-d) */
 	dirs?: boolean;
-	/** Dirs (shorthand for dirs) */
-	d?: boolean;
 	/** Copy symlinks as symlinks (-l) */
 	links?: boolean;
-	/** Links (shorthand for links) */
-	l?: boolean;
 	/** Perform a trial run with no changes made (-n) */
 	dry?: boolean;
-	/** Dry run (shorthand for dry) */
-	n?: boolean;
 	/** Preserve hard links (-H) */
 	hardLinks?: boolean;
-	/** Hard links (shorthand for hardLinks) */
-	H?: boolean;
 	/** Preserve permissions (-p) */
 	perms?: boolean;
-	/** Perms (shorthand for perms) */
-	p?: boolean;
 	/** Preserve executability (-E) */
 	executability?: boolean;
-	/** Executability (shorthand for executability) */
-	E?: boolean;
 	/** Preserve group (-g) */
 	group?: boolean;
-	/** Group (shorthand for group) */
-	g?: boolean;
 	/** Preserve owner (-o) */
 	owner?: boolean;
-	/** Owner (shorthand for owner) */
-	o?: boolean;
 	/** Preserve ACLs (-A) */
 	acls?: boolean;
-	/** ACLs (shorthand for acls) */
-	A?: boolean;
 	/** Preserve extended attributes (-X) */
 	xattrs?: boolean;
-	/** Extended attributes (shorthand for xattrs) */
-	X?: boolean;
 	/** Preserve device files (--devices) */
 	devices?: boolean;
 	/** Preserve special files (--specials) */
 	specials?: boolean;
 	/** Preserve modification times (-t) */
 	times?: boolean;
-	/** Times (shorthand for times) */
-	t?: boolean;
 	/** Set file/directory permissions (--chmod) */
 	chmod?: string | string[];
 	/** Exclude files matching pattern(s) */
@@ -187,63 +155,63 @@ class Rsync {
 			this._options.progress = null;
 		}
 
-		if (options.archive || options.a) {
+		if (options.archive) {
 			this._options.a = null;
 		}
 
-		if (options.compress || options.z) {
+		if (options.compress) {
 			this._options.z = null;
 		}
 
-		if (options.recursive || options.r) {
+		if (options.recursive) {
 			this._options.r = null;
 		}
 
-		if (options.update || options.u) {
+		if (options.update) {
 			this._options.u = null;
 		}
 
-		if (options.quiet || options.q) {
+		if (options.quiet) {
 			this._options.q = null;
 		}
 
-		if (options.dirs || options.d) {
+		if (options.dirs) {
 			this._options.d = null;
 		}
 
-		if (options.links || options.l) {
+		if (options.links) {
 			this._options.l = null;
 		}
 
-		if (options.dry || options.n) {
+		if (options.dry) {
 			this._options.n = null;
 		}
 
-		if (options.hardLinks || options.H) {
+		if (options.hardLinks) {
 			this._options.H = null;
 		}
 
-		if (options.perms || options.p) {
+		if (options.perms) {
 			this._options.p = null;
 		}
 
-		if (options.executability || options.E) {
+		if (options.executability) {
 			this._options.E = null;
 		}
 
-		if (options.group || options.g) {
+		if (options.group) {
 			this._options.g = null;
 		}
 
-		if (options.owner || options.o) {
+		if (options.owner) {
 			this._options.o = null;
 		}
 
-		if (options.acls || options.A) {
+		if (options.acls) {
 			this._options.A = null;
 		}
 
-		if (options.xattrs || options.X) {
+		if (options.xattrs) {
 			this._options.X = null;
 		}
 
@@ -255,7 +223,7 @@ class Rsync {
 			this._options.specials = null;
 		}
 
-		if (options.times || options.t) {
+		if (options.times) {
 			this._options.t = null;
 		}
 
