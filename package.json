@@ -1,7 +1,7 @@
 {
 	"name": "@moritzloewenstein/rsync",
 	"type": "module",
-	"version": "0.6.1",
+	"version": "1.0.0",
 	"description": "Rsync cli wrapper",
 	"repository": {
 		"type": "git",
