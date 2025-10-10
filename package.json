@@ -1,5 +1,5 @@
 {
-	"name": "rsync",
+	"name": "@moritzloewenstein/rsync",
 	"type": "module",
 	"version": "0.6.1",
 	"description": "Rsync cli wrapper",
