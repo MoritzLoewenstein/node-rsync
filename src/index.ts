@@ -1,4 +1,4 @@
-import { type ChildProcess, spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import path from "node:path";
 
 /**
@@ -349,21 +349,13 @@ class Rsync {
 		}
 
 		return new Promise((resolve, reject) => {
-			let cmdProc: ChildProcess;
-			if (process.platform === "win32") {
-				cmdProc = spawn("cmd.exe", ["/s", "/c", `"${this.command()}"`], {
-					stdio: "pipe",
-					windowsVerbatimArguments: true,
-					cwd: this._cwd,
-					env: this._env,
-				});
-			} else {
-				cmdProc = spawn(this._executableShell, ["-c", this.command()], {
-					stdio: "pipe",
-					cwd: this._cwd,
-					env: this._env,
-				});
-			}
+			const cmdProc = spawn(this.executable(), this.args(), {
+				shell: this._executableShell,
+				stdio: "pipe",
+				windowsVerbatimArguments: process.platform === "win32",
+				cwd: this._cwd,
+				env: this._env,
+			});
 
 			if (typeof this._outputHandlers.stdout === "function") {
 				cmdProc.stdout?.on("data", this._outputHandlers.stdout);
@@ -381,7 +373,7 @@ class Rsync {
 					error.cmd = this.command();
 					reject(error);
 				} else {
-					resolve({ code: code ?? 0, cmd: this.command() });
+					resolve({ code, cmd: this.command() });
 				}
 			});
 
@@ -422,7 +414,7 @@ function escapeShellArg(arg: string): string {
 }
 
 function escapeFileArg(filename: string): string {
-	filename = filename.replace(/(["'`\s\\()\\$])/g, "\\$1");
+	filename = filename.replace(/(["'`\s\\()\\$&])/g, "\\$1");
 	if (!/(\\\\)/.test(filename)) {
 		return filename;
 	}
