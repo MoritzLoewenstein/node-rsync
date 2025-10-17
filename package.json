@@ -30,11 +30,11 @@
 	"license": "MIT",
 	"readmeFilename": "README.md",
 	"devDependencies": {
-		"@biomejs/biome": "^2.2.5",
-		"@types/node": "^22.10.5",
-		"tsdown": "^0.15.6",
-		"typescript": "^5.7.3",
-		"vitest": "^2.1.8"
+		"@biomejs/biome": "^2.2.6",
+		"@types/node": "^22.18.11",
+		"tsdown": "^0.15.7",
+		"typescript": "^5.9.3",
+		"vitest": "^3.2.4"
 	},
 	"scripts": {
 		"build": "tsdown",
