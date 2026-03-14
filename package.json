@@ -5,7 +5,7 @@
 	"description": "Rsync cli wrapper",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/MoritzLoewenstein/node-rsync.git"
+		"url": "git+https://github.com/MoritzLoewenstein/node-rsync.git"
 	},
 	"files": [
 		"dist"
